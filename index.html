@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEAL MATCH 업무 계획 관리 시스템</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #1E90FF;
+            --primary-orange: #FF8C00;
+            --light-blue: #87CEEB;
+            --dark-blue: #1565C0;
+        }
+        
+        .deal-match-logo {
+            display: inline-flex;
+            align-items: center;
+            position: relative;
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-blue);
+            letter-spacing: 2px;
+        }
+        
+        .deal-match-logo::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(45deg, var(--primary-orange) 0%, #FFD700 100%);
+            transform: translateX(-50%) rotate(20deg);
+        }
+        
+        .mindmap-node {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .mindmap-node:hover {
+            transform: scale(1.05);
+        }
+        .subtask-item {
+            transition: all 0.3s ease;
+        }
+        .subtask-item:hover {
+            background-color: #f0f9ff;
+        }
+         {
+            .no-print { display: none !important; }
+            body { margin: 0; padding: 20px; }
+        }
+        .horizontal-mindmap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            overflow-x: auto;
+        }
+        .category-row {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .category-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 200px;
+        }
+        .connecting-line {
+            width: 2px;
+            height: 30px;
+            background: linear-gradient(to bottom, var(--primary-blue), var(--light-blue));
+            margin: 10px 0;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--light-blue) 100%);
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-blue) 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(30, 144, 255, 0.3);
+        }
+        
+        .tab-active {
+            color: var(--primary-blue) !important;
+            border-bottom: 2px solid var(--primary-orange) !important;
+            background: linear-gradient(to bottom, transparent 0%, rgba(30, 144, 255, 0.05) 100%);
+        }
+        
+        .category-management {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--light-blue) 100%);
+        }
+        
+        .category-realestate {
+            background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+        }
+        
+        .category-marketing {
+            background: linear-gradient(135deg, var(--primary-orange) 0%, #FFD700 100%);
+        }
+        
+        .category-development {
+            background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+        }
+        
+        .priority-high { background: linear-gradient(135deg, #EF4444 0%, #F87171 100%); }
+        .priority-medium { background: linear-gradient(135deg, var(--primary-orange) 0%, #FFD700 100%); }
+        .priority-low { background: linear-gradient(135deg, #10B981 0%, #34D399 100%); }
+        
+        .status-todo { background: linear-gradient(135deg, #6B7280 0%, #9CA3AF 100%); }
+        .status-inprogress { background: linear-gradient(135deg, var(--primary-blue) 0%, var(--light-blue) 100%); }
+        .status-completed { background: linear-gradient(135deg, #10B981 0%, #34D399 100%); }
+
+        /* 달력 스타일 */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: #e5e7eb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .calendar-header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--light-blue) 100%);
+            color: white;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .calendar-day {
+            background: white;
+            min-height: 120px;
+            padding: 8px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .calendar-day:hover {
+            background-color: #f8fafc;
+        }
+        
+        .calendar-day.other-month {
+            background-color: #f9fafb;
+            color: #9ca3af;
+        }
+        
+        .calendar-day.today {
+            background: linear-gradient(135deg, rgba(30, 144, 255, 0.1) 0%, rgba(135, 206, 235, 0.1) 100%);
+            border: 2px solid var(--primary-blue);
+        }
+        
+        .task-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin: 1px;
+            display: inline-block;
+        }
+        
+        .task-summary {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            padding: 2px 4px;
+            margin: 1px 0;
+            font-size: 10px;
+            line-height: 1.2;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .task-summary:hover {
+            background-color: #f0f9ff;
+            border-color: var(--primary-blue);
+        }
+        
+        .task-completed { background-color: #10b981; }
+        .task-inprogress { background-color: var(--primary-blue); }
+        .task-todo { background-color: #6b7280; }
+        
+        .calendar-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .month-nav-btn {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--light-blue) 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .month-nav-btn:hover {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-blue) 100%);
+            transform: translateY(-1px);
+        }
+
+        /* 로그인 스타일 */
+        .login-container {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--light-blue) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-form {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 400px;
+            width: 100%;
+            margin: 20px;
+        }
+        
+        .task-section {
+            border-left: 4px solid var(--primary-blue);
+            padding-left: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .task-section.recurring {
+            border-left-color: var(--primary-orange);
+        }
+        
+        .task-section.today {
+            border-left-color: #EF4444;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-sky-50 min-h-screen">
+    <!-- 로그인 화면 -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-form">
+            <div class="text-center mb-8">
+                <div class="deal-match-logo mx-auto mb-4" style="font-size: 2.5rem;">
+                    DEAL MATCH
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">업무 계획 관리 시스템</h2>
+                <p class="text-gray-600">승인된 사용자만 접근 가능합니다</p>
+            </div>
+            
+            <form id="loginForm">
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">패스워드</label>
+                    <input type="password" id="password" class="w-full p-4 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all text-center text-lg" placeholder="패스워드를 입력하세요" required>
+                </div>
+                
+                <button type="submit" class="w-full btn-primary py-4 rounded-lg font-medium text-lg">
+                    <i class="fas fa-sign-in-alt mr-2"></i>로그인
+                </button>
+                
+                <div id="loginError" class="mt-4 text-red-600 text-center text-sm hidden">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>패스워드가 올바르지 않습니다.
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 메인 앱 화면 -->
+    <div id="mainApp" class="hidden">
+        <!-- 헤더 -->
+        <header class="bg-white shadow-lg border-b-2 border-blue-200">
+            <div class="container mx-auto px-4 py-6">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <div class="deal-match-logo">
+                            DEAL MATCH
+                        </div>
+                        <div class="hidden md:block">
+                            <h1 class="text-xl font-semibold text-gray-700">
+                                업무 계획 관리 시스템
+                            </h1>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="logoutBtn" class="text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg font-medium no-print transition-colors">
+                            <i class="fas fa-sign-out-alt mr-2"></i>로그아웃
+                        </button>
+                        <button id="addTaskBtn" class="btn-primary px-6 py-3 rounded-lg font-medium no-print">
+                            <i class="fas fa-plus mr-2"></i>새 업무
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 메인 컨텐츠 -->
+        <main class="container mx-auto px-4 py-6">
+            <!-- 탭 메뉴 -->
+            <div class="bg-white rounded-xl shadow-lg mb-6 overflow-hidden">
+                <div class="flex border-b no-print overflow-x-auto">
+                    <button class="tab-btn tab-active px-6 py-4 font-medium transition-all whitespace-nowrap" data-category="전체업무">
+                        <i class="fas fa-chart-pie mr-2"></i>전체 업무
+                    </button>
+                    <button class="tab-btn px-6 py-4 font-medium text-gray-600 hover:text-blue-600 transition-all whitespace-nowrap" data-category="전체목록">
+                        <i class="fas fa-list mr-2"></i>전체 목록
+                    </button>
+                    <button class="tab-btn px-6 py-4 font-medium text-gray-600 hover:text-blue-600 transition-all whitespace-nowrap" data-category="달력">
+                        <i class="fas fa-calendar-alt mr-2"></i>달력
+                    </button>
+                    <button class="tab-btn px-6 py-4 font-medium text-gray-600 hover:text-blue-600 transition-all whitespace-nowrap" data-category="경영">
+                        <i class="fas fa-chart-line mr-2"></i>경영
+                    </button>
+                    <button class="tab-btn px-6 py-4 font-medium text-gray-600 hover:text-blue-600 transition-all whitespace-nowrap" data-category="부동산">
+                        <i class="fas fa-building mr-2"></i>부동산
+                    </button>
+                    <button class="tab-btn px-6 py-4 font-medium text-gray-600 hover:text-blue-600 transition-all whitespace-nowrap" data-category="마케팅">
+                        <i class="fas fa-bullhorn mr-2"></i>마케팅
+                    </button>
+                    <button class="tab-btn px-6 py-4 font-medium text-gray-600 hover:text-blue-600 transition-all whitespace-nowrap" data-category="개발">
+                        <i class="fas fa-code mr-2"></i>개발
+                    </button>
+                </div>
+
+                <!-- 달력 뷰 -->
+                <div id="calendarView" class="p-6 min-h-96" style="display: none;">
+                    <div class="calendar-controls">
+                        <button id="prevMonth" class="month-nav-btn">
+                            <i class="fas fa-chevron-left mr-2"></i>이전 달
+                        </button>
+                        <h2 id="currentMonth" class="text-2xl font-bold text-gray-800"></h2>
+                        <button id="nextMonth" class="month-nav-btn">
+                            다음 달<i class="fas fa-chevron-right ml-2"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="calendarContainer" class="calendar-grid">
+                        <!-- 달력이 여기에 동적으로 생성됩니다 -->
+                    </div>
+                    
+                    <div class="mt-6 flex flex-wrap gap-4 text-sm">
+                        <div class="flex items-center">
+                            <div class="task-dot task-completed mr-2"></div>
+                            <span>완료</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="task-dot task-inprogress mr-2"></div>
+                            <span>진행중</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="task-dot task-todo mr-2"></div>
+                            <span>할 일</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 업무 목록 -->
+                <div id="taskList" class="p-6 min-h-96">
+                    <!-- 업무 목록이 여기에 동적으로 생성됩니다 -->
+                </div>
+
+                <!-- 전체 목록 뷰 -->
+                <div id="allTasksList" class="p-6 min-h-96" style="display: none;">
+                    <!-- 전체 업무 목록이 여기에 동적으로 생성됩니다 -->
+                </div>
+            </div>
+
+            <!-- 전체 업무 개요 섹션 -->
+            <div id="overviewSection" class="space-y-6">
+                <!-- 업무 통계 -->
+                <div id="taskStats" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <!-- 통계 카드들이 여기에 생성됩니다 -->
+                </div>
+
+                <!-- 마인드맵 섹션 -->
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-8 text-center">
+                        <i class="fas fa-project-diagram mr-3" style="color: var(--primary-orange);"></i>
+                        전체 업무 마인드맵
+                    </h2>
+                    <div id="mindmapContainer" class="w-full min-h-96 border-2 border-blue-100 rounded-xl p-6 bg-gradient-to-br from-blue-50 to-sky-50">
+                        <!-- 마인드맵이 여기에 생성됩니다 -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 업무 추가/수정 모달 -->
+    <div id="taskModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 no-print">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-xl max-w-2xl w-full max-h-screen overflow-y-auto shadow-2xl">
+                <div class="p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 id="modalTitle" class="text-2xl font-bold text-gray-800">새 업무 추가</h2>
+                        <button id="closeModal" class="text-gray-500 hover:text-gray-700 transition-colors">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+
+                    <form id="taskForm">
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">업무명</label>
+                                <input type="text" id="taskName" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all" required>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">카테고리</label>
+                                <select id="taskCategory" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all" required>
+                                    <option value="경영">경영</option>
+                                    <option value="부동산">부동산</option>
+                                    <option value="마케팅">마케팅</option>
+                                    <option value="개발">개발</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">우선순위</label>
+                                <select id="taskPriority" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all">
+                                    <option value="high">높음</option>
+                                    <option value="medium" selected>보통</option>
+                                    <option value="low">낮음</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">상태</label>
+                                <select id="taskStatus" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all">
+                                    <option value="todo" selected>할 일</option>
+                                    <option value="inprogress">진행중</option>
+                                    <option value="completed">완료</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">마감일</label>
+                                <input type="date" id="taskDueDate" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">설명</label>
+                                <textarea id="taskDescription" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 h-24 transition-all" placeholder="업무에 대한 상세 설명을 입력하세요"></textarea>
+                            </div>
+
+                            <div class="flex items-center">
+                                <input type="checkbox" id="isRecurring" class="mr-3 w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                                <label for="isRecurring" class="text-sm font-medium text-gray-700">반복 업무</label>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">하위 업무</label>
+                                <div id="subtaskContainer" class="space-y-3">
+                                    <!-- 하위 업무들이 여기에 추가됩니다 -->
+                                </div>
+                                <button type="button" id="addSubtask" class="mt-3 text-blue-600 hover:text-blue-800 font-medium transition-colors">
+                                    <i class="fas fa-plus mr-2"></i>하위 업무 추가
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end space-x-3 mt-8">
+                            <button type="button" id="cancelBtn" class="px-6 py-3 text-gray-600 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-all">
+                                취소
+                            </button>
+                            <button type="submit" class="btn-primary px-6 py-3 rounded-lg font-medium">
+                                저장
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TaskManager {
+            constructor() {
+                this.tasks = JSON.parse(localStorage.getItem('dealMatchTasks')) || [];
+                this.currentCategory = '전체업무';
+                this.editingTaskId = null;
+                this.currentDate = new Date();
+                this.isLoggedIn = sessionStorage.getItem('dealMatchLogin') === 'true';
+                this.password = '0527'; // 실제 환경에서는 더 안전한 방법 사용
+                
+                this.initializeAuth();
+            }
+
+            initializeAuth() {
+                if (this.isLoggedIn) {
+                    this.showMainApp();
+                } else {
+                    this.showLoginScreen();
+                }
+            }
+
+            showLoginScreen() {
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('mainApp').classList.add('hidden');
+                
+                document.getElementById('loginForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleLogin();
+                });
+            }
+
+            showMainApp() {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').classList.remove('hidden');
+                this.initializeEvents();
+                this.renderContent();
+            }
+
+            handleLogin() {
+                const enteredPassword = document.getElementById('password').value;
+                const errorElement = document.getElementById('loginError');
+                
+                if (enteredPassword === this.password) {
+                    sessionStorage.setItem('dealMatchLogin', 'true');
+                    this.isLoggedIn = true;
+                    this.showMainApp();
+                } else {
+                    errorElement.classList.remove('hidden');
+                    document.getElementById('password').value = '';
+                    setTimeout(() => {
+                        errorElement.classList.add('hidden');
+                    }, 3000);
+                }
+            }
+
+            handleLogout() {
+                sessionStorage.removeItem('dealMatchLogin');
+                this.isLoggedIn = false;
+                location.reload();
+            }
+
+            initializeEvents() {
+                // 탭 클릭
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.switchTab(e.target.dataset.category);
+                    });
+                });
+
+                // 로그아웃 버튼
+                document.getElementById('logoutBtn').addEventListener('click', () => {
+                    this.handleLogout();
+                });
+
+                // 새 업무 버튼
+                document.getElementById('addTaskBtn').addEventListener('click', () => {
+                    this.openModal();
+                });
+
+                // 모달 관련
+                document.getElementById('closeModal').addEventListener('click', () => {
+                    this.closeModal();
+                });
+
+                document.getElementById('cancelBtn').addEventListener('click', () => {
+                    this.closeModal();
+                });
+
+                // 폼 제출
+                document.getElementById('taskForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.saveTask();
+                });
+
+                // 하위 업무 추가
+                document.getElementById('addSubtask').addEventListener('click', () => {
+                    this.addSubtaskInput();
+                });
+
+                // 달력 네비게이션
+                document.getElementById('prevMonth').addEventListener('click', () => {
+                    this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+                    this.renderCalendar();
+                });
+
+                document.getElementById('nextMonth').addEventListener('click', () => {
+                    this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+                    this.renderCalendar();
+                });
+            }
+
+            switchTab(category) {
+                this.currentCategory = category;
+                
+                // 탭 활성화 상태 변경
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('tab-active');
+                    btn.classList.add('text-gray-600');
+                });
+                
+                const activeTab = document.querySelector(`[data-category="${category}"]`);
+                activeTab.classList.add('tab-active');
+                activeTab.classList.remove('text-gray-600');
+
+                this.renderContent();
+            }
+
+            renderContent() {
+                const overviewSection = document.getElementById('overviewSection');
+                const taskList = document.getElementById('taskList');
+                const calendarView = document.getElementById('calendarView');
+                const allTasksList = document.getElementById('allTasksList');
+
+                // 모든 섹션 숨기기
+                overviewSection.style.display = 'none';
+                taskList.style.display = 'none';
+                calendarView.style.display = 'none';
+                allTasksList.style.display = 'none';
+
+                if (this.currentCategory === '전체업무') {
+                    overviewSection.style.display = 'block';
+                    this.renderOverview();
+                } else if (this.currentCategory === '전체목록') {
+                    allTasksList.style.display = 'block';
+                    this.renderAllTasksList();
+                } else if (this.currentCategory === '달력') {
+                    calendarView.style.display = 'block';
+                    this.renderCalendar();
+                } else {
+                    taskList.style.display = 'block';
+                    this.renderTaskList();
+                }
+            }
+
+            renderAllTasksList() {
+                const container = document.getElementById('allTasksList');
+                
+                if (this.tasks.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-16 text-gray-500">
+                            <i class="fas fa-clipboard-list text-6xl mb-6 text-blue-300"></i>
+                            <p class="text-xl font-semibold mb-2">등록된 업무가 없습니다.</p>
+                            <p class="text-sm">새 업무를 추가해보세요.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 업무 정렬 (반복업무 > 당일업무 > 중요도순)
+                const today = new Date().toISOString().split('T')[0];
+                const sortedTasks = [...this.tasks].sort((a, b) => {
+                    // 1. 반복업무 우선
+                    if (a.isRecurring && !b.isRecurring) return -1;
+                    if (!a.isRecurring && b.isRecurring) return 1;
+                    
+                    // 2. 당일 업무 우선
+                    const aIsToday = a.dueDate === today;
+                    const bIsToday = b.dueDate === today;
+                    if (aIsToday && !bIsToday) return -1;
+                    if (!aIsToday && bIsToday) return 1;
+                    
+                    // 3. 중요도순 (high > medium > low)
+                    const priorityOrder = { high: 3, medium: 2, low: 1 };
+                    return priorityOrder[b.priority] - priorityOrder[a.priority];
+                });
+
+                // 섹션별로 그룹화
+                const recurringTasks = sortedTasks.filter(task => task.isRecurring);
+                const todayTasks = sortedTasks.filter(task => task.dueDate === today && !task.isRecurring);
+                const otherTasks = sortedTasks.filter(task => !task.isRecurring && task.dueDate !== today);
+
+                let html = '<div class="space-y-8">';
+
+                // 반복 업무 섹션
+                if (recurringTasks.length > 0) {
+                    html += `
+                        <div class="task-section recurring">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-redo mr-3 text-orange-500"></i>
+                                반복 업무 (${recurringTasks.length}개)
+                            </h3>
+                            <div class="grid gap-4">
+                                ${this.renderTaskCards(recurringTasks)}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // 당일 업무 섹션
+                if (todayTasks.length > 0) {
+                    html += `
+                        <div class="task-section today">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-clock mr-3 text-red-500"></i>
+                                오늘 마감 업무 (${todayTasks.length}개)
+                            </h3>
+                            <div class="grid gap-4">
+                                ${this.renderTaskCards(todayTasks)}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // 기타 업무 섹션
+                if (otherTasks.length > 0) {
+                    html += `
+                        <div class="task-section">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-tasks mr-3 text-blue-500"></i>
+                                기타 업무 (${otherTasks.length}개)
+                            </h3>
+                            <div class="grid gap-4">
+                                ${this.renderTaskCards(otherTasks)}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                html += '</div>';
+                container.innerHTML = html;
+            }
+
+            renderTaskCards(tasks) {
+                return tasks.map(task => {
+                    const priorityIcons = {
+                        high: '<i class="fas fa-arrow-up text-red-600"></i>',
+                        medium: '<i class="fas fa-minus text-yellow-600"></i>',
+                        low: '<i class="fas fa-arrow-down text-green-600"></i>'
+                    };
+
+                    const statusIcons = {
+                        todo: '<i class="fas fa-clock text-gray-600"></i>',
+                        inprogress: '<i class="fas fa-play text-blue-600"></i>',
+                        completed: '<i class="fas fa-check-circle text-green-600"></i>'
+                    };
+
+                    const statusText = {
+                        todo: '할 일',
+                        inprogress: '진행중',
+                        completed: '완료'
+                    };
+
+                    const priorityText = {
+                        high: '높음',
+                        medium: '보통',
+                        low: '낮음'
+                    };
+
+                    const categoryColors = {
+                        경영: 'bg-blue-100 text-blue-800',
+                        부동산: 'bg-green-100 text-green-800',
+                        마케팅: 'bg-orange-100 text-orange-800',
+                        개발: 'bg-purple-100 text-purple-800'
+                    };
+
+                    return `
+                        <div class="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex-1">
+                                    <h4 class="text-lg font-semibold text-gray-800 mb-2">${task.name}</h4>
+                                    <div class="flex flex-wrap gap-2 mb-2">
+                                        <span class="px-2 py-1 text-xs rounded-full ${categoryColors[task.category]}">
+                                            ${task.category}
+                                        </span>
+                                        <span class="px-2 py-1 text-xs rounded-full priority-${task.priority} text-white">
+                                            ${priorityIcons[task.priority]} ${priorityText[task.priority]}
+                                        </span>
+                                        <span class="px-2 py-1 text-xs rounded-full status-${task.status} text-white">
+                                            ${statusIcons[task.status]} ${statusText[task.status]}
+                                        </span>
+                                        ${task.dueDate ? `<span class="px-2 py-1 text-xs rounded-full bg-orange-500 text-white"><i class="fas fa-calendar mr-1"></i>${task.dueDate}</span>` : ''}
+                                        ${task.isRecurring ? '<span class="px-2 py-1 text-xs rounded-full bg-purple-500 text-white"><i class="fas fa-redo mr-1"></i>반복</span>' : ''}
+                                    </div>
+                                    ${task.description ? `<p class="text-gray-600 text-sm mb-2">${task.description}</p>` : ''}
+                                    ${task.subtasks && task.subtasks.length > 0 ? `
+                                        <div class="text-xs text-gray-500">
+                                            <i class="fas fa-list mr-1"></i>하위 업무 ${task.subtasks.length}개
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                <div class="flex space-x-2 no-print ml-4">
+                                    <button onclick="taskManager.openModal('${task.id}')" class="text-blue-600 hover:text-blue-800 p-1 transition-colors">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="taskManager.deleteTask('${task.id}')" class="text-red-600 hover:text-red-800 p-1 transition-colors">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            renderCalendar() {
+                const container = document.getElementById('calendarContainer');
+                const monthTitle = document.getElementById('currentMonth');
+                
+                const year = this.currentDate.getFullYear();
+                const month = this.currentDate.getMonth();
+                
+                // 월 제목 설정
+                const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', 
+                                   '7월', '8월', '9월', '10월', '11월', '12월'];
+                monthTitle.textContent = `${year}년 ${monthNames[month]}`;
+                
+                // 달력 생성
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                const startingDayOfWeek = firstDay.getDay();
+                
+                let calendarHTML = '';
+                
+                // 요일 헤더
+                const dayHeaders = ['일', '월', '화', '수', '목', '금', '토'];
+                dayHeaders.forEach(day => {
+                    calendarHTML += `<div class="calendar-header">${day}</div>`;
+                });
+                
+                // 이전 달의 빈 칸들
+                const prevMonth = new Date(year, month - 1, 0);
+                const prevMonthDays = prevMonth.getDate();
+                for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+                    const day = prevMonthDays - i;
+                    calendarHTML += `
+                        <div class="calendar-day other-month">
+                            <div class="text-xs">${day}</div>
+                        </div>
+                    `;
+                }
+                
+                // 현재 달의 날짜들
+                const today = new Date();
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const currentDate = new Date(year, month, day);
+                    const isToday = currentDate.toDateString() === today.toDateString();
+                    const dateStr = currentDate.toISOString().split('T')[0];
+                    
+                    // 해당 날짜의 업무들 필터링
+                    const dayTasks = this.tasks.filter(task => {
+                        if (!task.dueDate) return false;
+                        return task.dueDate === dateStr;
+                    });
+                    
+                    let taskHTML = '';
+                    dayTasks.slice(0, 3).forEach(task => {
+                        taskHTML += `
+                            <div class="task-summary task-${task.status}" onclick="taskManager.openModal('${task.id}')" title="${task.name}">
+                                ${task.name.length > 8 ? task.name.substring(0, 8) + '...' : task.name}
+                            </div>
+                        `;
+                    });
+                    
+                    if (dayTasks.length > 3) {
+                        taskHTML += `<div class="text-xs text-gray-500">+${dayTasks.length - 3}개 더</div>`;
+                    }
+                    
+                    calendarHTML += `
+                        <div class="calendar-day ${isToday ? 'today' : ''}">
+                            <div class="text-sm font-semibold mb-1">${day}</div>
+                            ${taskHTML}
+                        </div>
+                    `;
+                }
+                
+                // 다음 달의 빈 칸들
+                const totalCells = container.children.length > 0 ? 42 : 35; // 5주 또는 6주
+                const usedCells = 7 + startingDayOfWeek + daysInMonth; // 헤더 + 이전달 + 현재달
+                const remainingCells = totalCells - usedCells;
+                
+                for (let day = 1; day <= remainingCells && remainingCells > 0; day++) {
+                    calendarHTML += `
+                        <div class="calendar-day other-month">
+                            <div class="text-xs">${day}</div>
+                        </div>
+                    `;
+                }
+                
+                container.innerHTML = calendarHTML;
+            }
+
+            renderOverview() {
+                this.renderTaskStats();
+                this.renderMindmap();
+            }
+
+            renderTaskStats() {
+                const container = document.getElementById('taskStats');
+                const categories = ['경영', '부동산', '마케팅', '개발'];
+                const gradientClasses = [
+                    'category-management',
+                    'category-realestate', 
+                    'category-marketing',
+                    'category-development'
+                ];
+                
+                const stats = categories.map((category, index) => {
+                    const categoryTasks = this.tasks.filter(task => task.category === category);
+                    const completedTasks = categoryTasks.filter(task => task.status === 'completed').length;
+                    const inProgressTasks = categoryTasks.filter(task => task.status === 'inprogress').length;
+                    const todoTasks = categoryTasks.filter(task => task.status === 'todo').length;
+                    
+                    return {
+                        category,
+                        total: categoryTasks.length,
+                        completed: completedTasks,
+                        inProgress: inProgressTasks,
+                        todo: todoTasks,
+                        gradientClass: gradientClasses[index]
+                    };
+                });
+
+                const statsHTML = stats.map(stat => `
+                    <div class="bg-white rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
+                        <div class="w-16 h-16 ${stat.gradientClass} rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                            <i class="fas fa-tasks text-white text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-3">${stat.category}</h3>
+                        <div class="space-y-2">
+                            <p class="text-3xl font-bold text-gray-900">${stat.total}</p>
+                            <p class="text-sm text-gray-600 mb-4">총 업무</p>
+                            <div class="grid grid-cols-3 gap-2 text-xs">
+                                <div class="bg-green-100 text-green-800 py-1 px-2 rounded-full">
+                                    완료 ${stat.completed}
+                                </div>
+                                <div class="bg-blue-100 text-blue-800 py-1 px-2 rounded-full">
+                                    진행 ${stat.inProgress}
+                                </div>
+                                <div class="bg-gray-100 text-gray-800 py-1 px-2 rounded-full">
+                                    대기 ${stat.todo}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                container.innerHTML = statsHTML;
+            }
+
+            openModal(taskId = null) {
+                this.editingTaskId = taskId;
+                const modal = document.getElementById('taskModal');
+                const title = document.getElementById('modalTitle');
+                
+                if (taskId) {
+                    title.textContent = '업무 수정';
+                    this.populateForm(taskId);
+                } else {
+                    title.textContent = '새 업무 추가';
+                    this.resetForm();
+                }
+                
+                modal.classList.remove('hidden');
+            }
+
+            closeModal() {
+                document.getElementById('taskModal').classList.add('hidden');
+                this.editingTaskId = null;
+                this.resetForm();
+            }
+
+            resetForm() {
+                document.getElementById('taskForm').reset();
+                if (this.currentCategory !== '전체업무' && this.currentCategory !== '전체목록' && this.currentCategory !== '달력') {
+                    document.getElementById('taskCategory').value = this.currentCategory;
+                }
+                document.getElementById('subtaskContainer').innerHTML = '';
+            }
+
+            populateForm(taskId) {
+                const task = this.tasks.find(t => t.id === taskId);
+                if (!task) return;
+
+                document.getElementById('taskName').value = task.name;
+                document.getElementById('taskCategory').value = task.category;
+                document.getElementById('taskPriority').value = task.priority;
+                document.getElementById('taskStatus').value = task.status;
+                document.getElementById('taskDescription').value = task.description || '';
+                document.getElementById('taskDueDate').value = task.dueDate || '';
+                document.getElementById('isRecurring').checked = task.isRecurring || false;
+
+                // 하위 업무 추가
+                const container = document.getElementById('subtaskContainer');
+                container.innerHTML = '';
+                if (task.subtasks) {
+                    task.subtasks.forEach(subtask => {
+                        this.addSubtaskInput(subtask);
+                    });
+                }
+            }
+
+            addSubtaskInput(value = '') {
+                const container = document.getElementById('subtaskContainer');
+                const div = document.createElement('div');
+                div.className = 'flex items-center space-x-3';
+                div.innerHTML = `
+                    <input type="text" class="flex-1 p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all" placeholder="하위 업무명" value="${value}">
+                    <button type="button" class="text-red-600 hover:text-red-800 p-2 transition-colors" onclick="this.parentElement.remove()">
+                        <i class="fas fa-trash text-lg"></i>
+                    </button>
+                `;
+                container.appendChild(div);
+            }
+
+            saveTask() {
+                const name = document.getElementById('taskName').value;
+                const category = document.getElementById('taskCategory').value;
+                const priority = document.getElementById('taskPriority').value;
+                const status = document.getElementById('taskStatus').value;
+                const description = document.getElementById('taskDescription').value;
+                const dueDate = document.getElementById('taskDueDate').value;
+                const isRecurring = document.getElementById('isRecurring').checked;
+
+                // 하위 업무 수집
+                const subtasks = Array.from(document.querySelectorAll('#subtaskContainer input'))
+                    .map(input => input.value.trim())
+                    .filter(value => value !== '');
+
+                const task = {
+                    id: this.editingTaskId || Date.now().toString(),
+                    name,
+                    category,
+                    priority,
+                    status,
+                    description,
+                    dueDate,
+                    isRecurring,
+                    subtasks,
+                    createdAt: this.editingTaskId ? 
+                        this.tasks.find(t => t.id === this.editingTaskId).createdAt : 
+                        new Date().toISOString()
+                };
+
+                if (this.editingTaskId) {
+                    const index = this.tasks.findIndex(t => t.id === this.editingTaskId);
+                    this.tasks[index] = task;
+                } else {
+                    this.tasks.push(task);
+                }
+
+                this.saveTasks();
+                this.closeModal();
+                this.renderContent();
+            }
+
+            deleteTask(taskId) {
+                if (confirm('이 업무를 삭제하시겠습니까?')) {
+                    this.tasks = this.tasks.filter(t => t.id !== taskId);
+                    this.saveTasks();
+                    this.renderContent();
+                }
+            }
+
+            saveTasks() {
+                localStorage.setItem('dealMatchTasks', JSON.stringify(this.tasks));
+            }
+
+            renderTaskList() {
+                const container = document.getElementById('taskList');
+                const categoryTasks = this.tasks.filter(task => task.category === this.currentCategory);
+
+                if (categoryTasks.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-16 text-gray-500">
+                            <i class="fas fa-clipboard-list text-6xl mb-6 text-blue-300"></i>
+                            <p class="text-xl font-semibold mb-2">등록된 업무가 없습니다.</p>
+                            <p class="text-sm">새 업무를 추가해보세요.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const taskCards = categoryTasks.map(task => {
+                    const priorityIcons = {
+                        high: '<i class="fas fa-arrow-up text-red-600"></i>',
+                        medium: '<i class="fas fa-minus text-yellow-600"></i>',
+                        low: '<i class="fas fa-arrow-down text-green-600"></i>'
+                    };
+
+                    const statusIcons = {
+                        todo: '<i class="fas fa-clock text-gray-600"></i>',
+                        inprogress: '<i class="fas fa-play text-blue-600"></i>',
+                        completed: '<i class="fas fa-check-circle text-green-600"></i>'
+                    };
+
+                    const statusText = {
+                        todo: '할 일',
+                        inprogress: '진행중',
+                        completed: '완료'
+                    };
+
+                    const priorityText = {
+                        high: '높음',
+                        medium: '보통',
+                        low: '낮음'
+                    };
+
+                    return `
+                        <div class="bg-white rounded-xl p-6 mb-6 border border-gray-200 hover:shadow-lg transition-shadow">
+                            <div class="flex justify-between items-start mb-4">
+                                <h3 class="text-xl font-bold text-gray-800">${task.name}</h3>
+                                <div class="flex space-x-3 no-print">
+                                    <button onclick="taskManager.openModal('${task.id}')" class="text-blue-600 hover:text-blue-800 p-2 transition-colors">
+                                        <i class="fas fa-edit text-lg"></i>
+                                    </button>
+                                    <button onclick="taskManager.deleteTask('${task.id}')" class="text-red-600 hover:text-red-800 p-2 transition-colors">
+                                        <i class="fas fa-trash text-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-wrap gap-3 mb-4">
+                                <span class="px-3 py-1 text-sm rounded-full priority-${task.priority} text-white font-medium">
+                                    ${priorityIcons[task.priority]} ${priorityText[task.priority]}
+                                </span>
+                                <span class="px-3 py-1 text-sm rounded-full status-${task.status} text-white font-medium">
+                                    ${statusIcons[task.status]} ${statusText[task.status]}
+                                </span>
+                                ${task.dueDate ? `<span class="px-3 py-1 text-sm rounded-full bg-orange-500 text-white font-medium"><i class="fas fa-calendar mr-1"></i>${task.dueDate}</span>` : ''}
+                                ${task.isRecurring ? '<span class="px-3 py-1 text-sm rounded-full bg-purple-500 text-white font-medium"><i class="fas fa-redo mr-1"></i>반복</span>' : ''}
+                            </div>
+                            
+                            ${task.description ? `<p class="text-gray-600 mb-4 text-sm leading-relaxed">${task.description}</p>` : ''}
+                            
+                            ${task.subtasks && task.subtasks.length > 0 ? `
+                                <div class="mt-4 p-4 bg-blue-50 rounded-lg">
+                                    <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                                        <i class="fas fa-list mr-2 text-blue-600"></i>하위 업무 (${task.subtasks.length}개)
+                                    </h4>
+                                    <ul class="space-y-2">
+                                        ${task.subtasks.map(subtask => `
+                                            <li class="text-sm text-gray-600 flex items-center">
+                                                <i class="fas fa-caret-right mr-2 text-blue-400"></i>
+                                                ${subtask}
+                                            </li>
+                                        `).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+
+                container.innerHTML = taskCards;
+            }
+
+            renderMindmap() {
+                const container = document.getElementById('mindmapContainer');
+                const categories = ['경영', '부동산', '마케팅', '개발'];
+                const gradientClasses = [
+                    'category-management',
+                    'category-realestate', 
+                    'category-marketing',
+                    'category-development'
+                ];
+                
+                let mindmapHTML = `
+                    <div class="horizontal-mindmap">
+                        <!-- 최상위 노드 -->
+                        <div class="bg-gradient-to-r from-blue-600 to-sky-500 text-white px-12 py-6 rounded-xl text-2xl font-bold mb-6 shadow-lg">
+                            <i class="fas fa-briefcase mr-3"></i>DEAL MATCH 업무 계획
+                        </div>
+                        
+                        <!-- 연결선 -->
+                        <div class="connecting-line"></div>
+                        
+                        <!-- 카테고리 행 -->
+                        <div class="category-row">
+                `;
+
+                categories.forEach((category, index) => {
+                    const categoryTasks = this.tasks.filter(task => task.category === category);
+                    
+                    mindmapHTML += `
+                        <div class="category-column">
+                            <!-- 카테고리 노드 -->
+                            <div class="${gradientClasses[index]} text-white px-8 py-4 rounded-xl text-lg font-bold mb-4 text-center shadow-lg">
+                                ${category}
+                                <div class="text-sm opacity-90 mt-1">(${categoryTasks.length}개 업무)</div>
+                            </div>
+                            
+                            <!-- 연결선 -->
+                            ${categoryTasks.length > 0 ? '<div class="connecting-line"></div>' : ''}
+                            
+                            <!-- 업무 노드들 -->
+                            <div class="flex flex-wrap justify-center gap-3 max-w-xs">
+                                ${categoryTasks.map(task => {
+                                    const statusColors = {
+                                        completed: 'border-green-400 bg-green-50',
+                                        inprogress: 'border-blue-400 bg-blue-50',
+                                        todo: 'border-gray-400 bg-gray-50'
+                                    };
+                                    
+                                    const statusIcons = {
+                                        completed: 'text-green-500',
+                                        inprogress: 'text-blue-500',
+                                        todo: 'text-gray-500'
+                                    };
+                                    
+                                    return `
+                                        <div class="bg-white border-2 ${statusColors[task.status]} rounded-lg px-4 py-3 text-sm shadow-md hover:shadow-lg transition-all cursor-pointer mindmap-node transform hover:scale-105"
+                                             onclick="taskManager.openModal('${task.id}')"
+                                             title="${task.description || ''}">
+                                            <div class="font-semibold text-gray-800 text-center mb-2">${task.name}</div>
+                                            ${task.dueDate ? `<div class="text-xs text-orange-600 text-center mb-1">${task.dueDate}</div>` : ''}
+                                            ${task.subtasks && task.subtasks.length > 0 ? 
+                                                `<div class="text-xs text-gray-500 text-center mb-2">${task.subtasks.length}개 하위업무</div>` : 
+                                                ''
+                                            }
+                                            <div class="flex justify-center">
+                                                <i class="fas fa-circle ${statusIcons[task.status]} text-xs"></i>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                mindmapHTML += `
+                        </div>
+                    </div>
+                `;
+
+                container.innerHTML = mindmapHTML;
+            }
+        }
+
+        // 앱 초기화
+        const taskManager = new TaskManager();
+    </script>
+</body>
+</html>
